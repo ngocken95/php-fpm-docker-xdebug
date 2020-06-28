@@ -1,0 +1,81 @@
+version: "3"
+
+services:
+  #--------------MYSQL--------------#
+#  db:
+#    image: mysql:5.7.24
+#    restart: always
+#    container_name: db
+#    command: --default-authentication-plugin=mysql_native_password
+#    volumes:
+#      - ./data/db/mysql:/var/lib/mysql
+#      - ./data/dump:/var/www/dump
+#    environment:
+#      MYSQL_ROOT_PASSWORD: secret
+#    ports:
+#      - "3306:3306"
+#    networks:
+#      myapp_net:
+#        ipv4_address: 172.16.238.111
+  #--------------MYADMIN--------------#
+#  myadmin:
+#    image: phpmyadmin/phpmyadmin
+#    container_name: phpmyadmin
+#    ports:
+#      - "9999:80"
+#    environment:
+#      - PMA_ARBITRARY=1
+#      - PMA_HOST=db
+#      - PMA_USER=root
+#      - PMA_PASSWORD=secret
+#    restart: always
+#    depends_on:
+#      - db
+#    networks:
+#      myapp_net:
+  #--------------REDIS--------------#
+  #redis:
+  #  image: redis:4.0.5-alpine
+  #  ports:
+  #    - "6379:6379"
+  #  container_name: redis
+  #  restart: always
+  #  command: redis-server --appendonly yes
+  #  networks:
+  #    myapp_net:
+  #      ipv4_address: 172.16.238.222
+  #--------------WEB--------------#
+  web:
+    image: nginx:1.17
+    ports:
+      - 8080:80
+    volumes:
+      - .:/var/www/myapp
+      - ./site.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php
+  #--------------PHP--------------#
+  php:
+    build: .
+    container_name: php
+    volumes:
+      - .:/var/www/myapp
+      - ./xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+#      - /var/www/h5:/var/www
+#      - /tmp/pdr:/tmp/pdr
+    environment:
+      PHP_EXTENSION_XDEBUG: 1
+      XDEBUG_CONFIG: remote_host=10.104.0.20 # ip máy local
+#    ports:
+#      - "9001:9001"
+#      - "3000:3000"
+#    depends_on:
+#      - db
+#--------------CONFIG--------------#
+networks:
+  myapp_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.0/24
